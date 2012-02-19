@@ -1,0 +1,9 @@
+require 'rspec/core/rake_task'
+
+RSpec::Core::RakeTask.new(:spec) do |spec|
+  spec.rspec_opts = %w(-fs -c)
+end
+
+RSpec::Core::RakeTask.new(:rcov) do |task|
+  task.rcov = true
+end
