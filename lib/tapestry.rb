@@ -4,12 +4,12 @@ require 'coolio'
 
 module Tapestry
   LOOP_FIBER = Fiber.current
+  LOOP = Coolio::Loop.default
   
   def self.boot!(&block)
     @runqueue = []
-    @ev_loop = Coolio::Loop.default
     
-    main_fiber = Tapestry::Fiber.new @ev_loop, &block
+    main_fiber = Tapestry::Fiber.new &block
     begin
       while(!runqueue.empty?)
         #run everything in the queue
@@ -19,10 +19,10 @@ module Tapestry
       end
       
       #STDERR.puts("About to run once")
-      @ev_loop.run_once
+      LOOP.run_once
       #STDERR.puts("Ran once")
       #STDERR.puts("Watchers: #{@ev_loop.watchers.join(',')}")
-    end while(@ev_loop.has_active_watchers? || !runqueue.empty?)
+    end while(LOOP.has_active_watchers? || !runqueue.empty?)
     #STDERR.puts("LOOP DONE!")
   end
   

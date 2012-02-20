@@ -6,7 +6,6 @@ describe Tapestry do
     block_ran = false
     Tapestry.boot! do
       block_ran = true
-      Fiber.current.ev_loop.nil?.should == false
     end
     block_ran.should == true
   end

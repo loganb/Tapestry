@@ -3,11 +3,16 @@
 # We need some state on the fiber
 # 
 class Tapestry::Fiber < ::Fiber
-  attr_accessor :ev_loop
   
-  def initialize(ev_loop, &block)
-    super(&block)
-    self.ev_loop = ev_loop
+  def initialize(&block)
+    super() do
+      begin
+        block && block.call
+      rescue Exception => e
+        STDERR.puts("Execption in #{Fiber.current}: #{e}\n#{e.backtrace.collect { |l| "  #{l}"}.join("\n")}")
+        raise
+      end
+    end
     Tapestry.runqueue << self
   end
   
@@ -21,7 +26,7 @@ class Tapestry::Fiber < ::Fiber
       Tapestry.runqueue << f
       t.detach #One-shot…
     end
-    t.attach(evloop)
+    t.attach(Tapestry::LOOP)
   end
   
 end
@@ -35,9 +40,4 @@ class Fiber
     self.parent = Fiber.current
     orig_resume(*args)
   end
-  
-  def ev_loop
-    parent.ev_loop if(parent)
-  end
-
 end
