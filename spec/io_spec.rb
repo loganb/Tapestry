@@ -18,7 +18,7 @@ describe Tapestry::IO do
     end
   end
   
-  it "Reads frames out of a pipe" do
+  it "Reads frames out of a pipe (readline)" do
     (rp, wp) = File.pipe
     
     do_async 0.1 do
