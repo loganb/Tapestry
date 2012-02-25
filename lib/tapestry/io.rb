@@ -74,6 +74,34 @@ class Tapestry::IO
     true
   end
   
+  #
+  # Blocks until the given Ruby IO object is readable
+  #
+  # This method is useful if you do not want to use other Tapestry::IO 
+  # functionality
+  #
+  def self.read_wait(io, timeout = 0) 
+    w = Coolio::IOWatcher.new(io, :r)
+    t = Coolio::TimerWatcher.new(timeout, false) if(timeout > 0)
+
+    w.attach Tapestry::LOOP
+    t.attach Tapestry::LOOP
+    
+    f = Fiber.current
+    p = Proc.new do
+      #Turn off the read watcher
+      w.detach
+      #Turn off the timer watcher
+      t and t.detach
+
+      Tapestry.runqueue << f
+    end
+    w.on_readable &p
+    t and t.on_timer &p
+
+    Tapestry::LOOP_FIBER.transfer
+  end
+  
   protected
   
   #

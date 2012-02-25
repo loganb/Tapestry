@@ -16,16 +16,21 @@ describe Tapestry do
     Tapestry.boot! do
       #Setup another fiber to run
       Tapestry::Fiber.new do
-        Fiber.current.resume_in(0.2)
-        wake_order << 2
+        Fiber.current.sleep 0.05
+        2.times do
+          wake_order << 2
+          Fiber.current.sleep(0.1)
+        end
       end
       
       #Sleep for a little less than the other fiber
-      Fiber.current.resume_in(0.1)
-      wake_order << 1
+      2.times do
+        wake_order << 1
+        Fiber.current.sleep(0.1)
+      end
     end
     
-    wake_order.should == [1,2]
+    wake_order.should == [1,2,1,2]
   end
 
 end

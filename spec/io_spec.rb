@@ -18,6 +18,19 @@ describe Tapestry::IO do
     end
   end
   
+  it "blocks with a timeout (static method)" do
+    (rp, wp) = File.pipe
+    
+    s = e = 0
+    Tapestry.boot! do
+      s = Time.now
+      Tapestry::IO.read_wait(rp, 0.1)
+      e = Time.now
+    end
+    
+    (e - s).should > 0.1
+  end
+  
   it "Reads frames out of a pipe (readline)" do
     (rp, wp) = File.pipe
     

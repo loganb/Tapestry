@@ -17,9 +17,9 @@ class Tapestry::Fiber < ::Fiber
   end
   
   #
-  # Queues something to run in
+  # Queues something to run in time seconds
   #
-  def resume_in(time)
+  def sleep(time)
     t = Coolio::TimerWatcher.new(time, false)
     f = self
     t.on_timer do
@@ -27,6 +27,7 @@ class Tapestry::Fiber < ::Fiber
       t.detach #One-shot…
     end
     t.attach(Tapestry::LOOP)
+    Tapestry::LOOP_FIBER.transfer
   end
   
 end
