@@ -45,21 +45,27 @@ class Tapestry::IO
     buffer
   end
   
-  def write_async(str)
+  #
+  # Equivalent to ::IO#write_nonblock excpect that it will
+  # always return immediately (and report writing the full string)
+  #
+  def write_nonblock(str)
     write_buf.append(str)
     write_buf.write_to(io)
     drain_write_buffer unless write_buf.empty?
+    str.length
   end
   
   def write(str)
-    write_async(str)
+    ret = write_nonblock(str)
     wait_until_write
+    ret
   end
   
   ##
   # Blocks until all bytes have been written out the IO object
   #
-  def wait_until_write
+  def write_barrier
     write_watcher.sync
   end
   
