@@ -16,10 +16,13 @@ Gem::Specification.new do |gem|
 
   gem.required_rubygems_version = '>= 1.3.6'
 
-  gem.files        = Dir['README.md', 'lib/**/*']
+  gem.files        = Dir['README.md', 'lib/**/*', '*.gemspec', '**/*.rb', '**/*.rake']
   gem.require_path = 'lib'
 
   gem.add_development_dependency 'rake'
   gem.add_development_dependency 'rspec'
   gem.add_development_dependency 'rdoc'
+  
+  gem.add_dependency 'cool.io'
+  gem.add_dependency 'iobuffer'
 end
