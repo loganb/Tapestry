@@ -27,14 +27,19 @@ class Tapestry::IO
   end
   
   def read(len, buffer = nil)
-    #Truncate the supplied buffer if there is one
-    buffer.clear if buffer
-    #First drain as much as possible out of the io buffer
+    #Seed buffer variable if it is nil
     tmp = read_buf.read(len)
-    buffer = buffer ? buffer << tmp : tmp
-    len -= tmp.length
+    if buffer
+      #Truncate the supplied buffer if there is one
+      buffer.clear 
+      buffer << tmp
+    else
+      buffer = tmp
+    end
+    len -= buffer.length
+
     return buffer if len == 0
-    
+
     #now read from the file handle until full
     begin 
       read_buf.read_from(io)
@@ -58,7 +63,7 @@ class Tapestry::IO
   
   def write(str)
     ret = write_nonblock(str)
-    wait_until_write
+    write_barrier
     ret
   end
   
