@@ -31,7 +31,7 @@ describe Tapestry::IO do
     (e - s).should > 0.1
   end
   
-  it "Reads frames out of a pipe (readline)" do
+  it "reads frames out of a pipe (readline)" do
     (rp, wp) = File.pipe
     
     do_async 0.1 do
@@ -49,7 +49,7 @@ describe Tapestry::IO do
     end
   end
   
-  it "Emulates IO::read()" do
+  it "emulates IO::read()" do
     (rp, wp) = File.pipe
     
     do_async 0 do
@@ -65,7 +65,28 @@ describe Tapestry::IO do
     end
   end
   
-  it "Writes out data" do
+  it "emulates IO::readline" do
+    (rp, wp) = File.pipe
+    
+    do_async 0 do
+      wp.write("line1\nline2\nline3")
+      wp.close
+    end
+    
+    Tapestry.boot! do
+      io = Tapestry::IO.new(rp)
+      
+      io.readline.should == "line1\n"
+      io.readline.should == "line2\n"
+      io.readline.should == "line3"
+      
+      lambda {
+        io.readline
+      }.should raise_error(EOFError)
+    end
+  end
+  
+  it "writes out data" do
     (rp, wp) = File.pipe
     data_len     = nil
     correct_data = false

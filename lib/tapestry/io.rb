@@ -10,17 +10,18 @@ class Tapestry::IO
   end
   
   def readline(sep = $/)
-    raise if sep.length > 1
     ret = ""
 
     #STDERR.puts("About to read frame: #{read_buf.size}")
-    return ret if(read_buf.read_frame(ret, sep.ord))
+    return ret if(read_buf.readline(sep, ret))
     loop do
       unless read_buf.read_from(io)
         #EOF
-        read_buf.read_frame(ret, sep.ord)
+        read_buf.readline(sep, ret)
+        raise EOFError if(ret == '')
         break
       end
+      return ret if(read_buf.readline(sep, ret))
       wait_for_read
     end
     ret
@@ -151,7 +152,6 @@ class Tapestry::IO
       enabled? || enable
       
       Tapestry::LOOP_FIBER.transfer
-      
       disable
     end
     
