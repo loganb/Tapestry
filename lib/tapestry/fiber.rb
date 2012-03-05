@@ -4,10 +4,10 @@
 # 
 class Tapestry::Fiber < ::Fiber
   
-  def initialize(&block)
+  def initialize(*args, &block)
     super() do
       begin
-        block && block.call
+        block && block.call(*args)
       rescue Exception => e
         STDERR.puts("Execption in #{Fiber.current}: #{e}\n#{e.backtrace.collect { |l| "  #{l}"}.join("\n")}")
         raise
@@ -28,6 +28,10 @@ class Tapestry::Fiber < ::Fiber
     end
     t.attach(Tapestry::LOOP)
     Tapestry::LOOP_FIBER.transfer
+  end
+  
+  def raise(exception)
+    
   end
   
 end

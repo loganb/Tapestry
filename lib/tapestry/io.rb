@@ -44,28 +44,38 @@ class Tapestry::IO
     end
   end
   
-  def read(len, buffer = nil)
-    #Seed buffer variable if it is nil
-    tmp = read_buf.read(len)
-    if buffer
-      #Truncate the supplied buffer if there is one
-      buffer.clear 
-      buffer << tmp
+  def read(len = nil, buffer = nil)
+    if(len.nil?)
+      #read everything until EOF
+      buffer = read_buf.read
+      while(read_buf.read_from(io))
+        buffer << read_buf.read
+        wait_for_read
+      end
+      buffer << read_buf.read
     else
-      buffer = tmp
-    end
-    len -= buffer.length
-
-    return buffer if len == 0
-
-    #now read from the file handle until full
-    begin 
-      read_buf.read_from(io)
+      #Seed buffer variable if it is nil
       tmp = read_buf.read(len)
-      buffer << tmp
-      len -= tmp.length
-    end while(len > 0 && wait_for_read)
-    buffer
+      if buffer
+        #Truncate the supplied buffer if there is one
+        buffer.clear 
+        buffer << tmp
+      else
+        buffer = tmp
+      end
+      len -= buffer.length
+
+      return buffer if len == 0
+
+      #now read from the file handle until full
+      begin 
+        read_buf.read_from(io)
+        tmp = read_buf.read(len)
+        buffer << tmp
+        len -= tmp.length
+      end while(len > 0 && wait_for_read)
+      buffer
+    end
   end
   
   #
@@ -89,7 +99,6 @@ class Tapestry::IO
   # Blocks until all bytes have been written out the IO object
   #
   def write_barrier
-    write_watcher.sync
   end
   
   def close
@@ -104,11 +113,11 @@ class Tapestry::IO
   end
   
   ##
-  # Equivalent to ::IO#flush. Tapestry does not attempt to buffer
-  # data, so flush is a no-op
+  # Equivalent to ::IO#flush. Tapestry will block until all buffered
+  # bytes are written to the unerlying socket
   #
   def flush
-    
+    write_watcher.sync
   end
   
   #
@@ -223,5 +232,12 @@ class Tapestry::IO
       self.blocking_fiber = Fiber.current
       Tapestry::LOOP_FIBER.transfer
     end
+  end
+end
+
+class ::IO
+  
+  def tapestrize
+    Tapestry::IO.new(self)
   end
 end

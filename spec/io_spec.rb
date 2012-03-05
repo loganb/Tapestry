@@ -49,7 +49,7 @@ describe Tapestry::IO do
     end
   end
   
-  it "emulates IO::read()" do
+  it "emulates IO::read(len)" do
     (rp, wp) = File.pipe
     
     do_async 0 do
@@ -61,6 +61,22 @@ describe Tapestry::IO do
 
       io.read(2).should == "Fo"
       io.read(2, "bar").should == "oz"
+      io.close
+    end
+  end
+  
+  it "emulates IO::read" do
+    (rp, wp) = File.pipe
+    
+    do_async 0.1 do
+      wp.write("Fooz")
+      wp.close
+    end
+    
+    Tapestry.boot! do
+      io = Tapestry::IO.new(rp)
+
+      io.read.should == "Fooz"
       io.close
     end
   end
