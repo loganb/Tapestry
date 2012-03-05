@@ -33,3 +33,5 @@ end
 
 require 'tapestry/fiber'
 require 'tapestry/io'
+require 'tapestry/tcp_socket'
+require 'tapestry/tcp_server'

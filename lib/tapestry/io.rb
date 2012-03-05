@@ -27,6 +27,23 @@ class Tapestry::IO
     ret
   end
   
+  def each_line(sep = $/, &block)
+    enum = Enumerator.new { |y| 
+      while(true)
+        begin
+          y.yield(readline(sep))
+        rescue EOFError
+          break
+        end
+      end
+    }
+    if(block_given?)
+      enum.each &block
+    else
+      enum
+    end
+  end
+  
   def read(len, buffer = nil)
     #Seed buffer variable if it is nil
     tmp = read_buf.read(len)
@@ -84,6 +101,14 @@ class Tapestry::IO
   def wait_for_read
     read_watcher.wait_on
     true
+  end
+  
+  ##
+  # Equivalent to ::IO#flush. Tapestry does not attempt to buffer
+  # data, so flush is a no-op
+  #
+  def flush
+    
   end
   
   #

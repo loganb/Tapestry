@@ -86,6 +86,23 @@ describe Tapestry::IO do
     end
   end
   
+  it "emulates IO::each_line" do
+    (rp, wp) = File.pipe
+    
+    do_async 0 do
+      wp.write("line1\nline2\nline3")
+      wp.close
+    end
+    
+    Tapestry.boot! do
+      io = Tapestry::IO.new(rp)
+      
+      lines = []
+      io.each_line { |l| lines << l }
+      lines.should == ["line1\n", "line2\n", "line3"]
+    end
+  end
+  
   it "writes out data" do
     (rp, wp) = File.pipe
     data_len     = nil
