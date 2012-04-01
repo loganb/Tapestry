@@ -8,6 +8,7 @@ module Tapestry
   
   def self.boot!(&block)
     @runqueue = []
+    @waitqueue = {}
     
     main_fiber = Tapestry::Fiber.new &block
     begin
@@ -27,6 +28,15 @@ module Tapestry
   end
   
   class <<self
+    #
+    # Map of Fibers waiting for an event of some kind. The key is the 
+    # Tapestry::Fiber (aka root Fiber), the value is the Fiber to resume
+    #
+    attr_reader :waitqueue
+    
+    #
+    # An array of Fibers that need to be resumed
+    #
     attr_reader :runqueue
   end
 end

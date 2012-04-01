@@ -180,12 +180,12 @@ class Tapestry::IO
     end
     
     def wait_on
-      f = Fiber.current
+      f = Fiber.current.tapestry_fiber
       
       self.blocking_fiber = f
       enabled? || enable
       
-      Tapestry::LOOP_FIBER.transfer
+      Tapestry::Fiber.park
       disable
     end
     
@@ -238,6 +238,6 @@ end
 class ::IO
   
   def tapestrize
-    Tapestry::IO.new(self)
+    @_tapestry_io ||= Tapestry::IO.new(self)
   end
 end

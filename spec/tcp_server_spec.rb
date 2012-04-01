@@ -16,7 +16,7 @@ describe Tapestry::TCPServer do
     Tapestry.boot! do
       
       Tapestry::Fiber.new do
-        Fiber.current.sleep 0.1
+        Tapestry::Fiber.sleep 0.1
         ordering << :sleep_ended
       end
       
