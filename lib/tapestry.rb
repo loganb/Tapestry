@@ -41,6 +41,19 @@ module Tapestry
   end
 end
 
+module Kernel
+  alias_method :tapestry_orig_sleep, :sleep
+  
+  def sleep(*args)
+    t = Fiber.current.tapestry_fiber
+    if(t)
+      Tapestry::Fiber.sleep(*args)
+    else
+      tapestry_orig_sleep(*args)
+    end
+  end
+end
+
 require 'tapestry/fiber'
 require 'tapestry/io'
 require 'tapestry/tcp_socket'

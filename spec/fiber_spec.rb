@@ -16,17 +16,17 @@ describe Tapestry do
     Tapestry.boot! do
       #Setup another fiber to run
       Tapestry::Fiber.new do
-        Tapestry::Fiber.sleep 0.05
+        sleep 0.05
         2.times do
           wake_order << 2
-          Tapestry::Fiber.sleep(0.1)
+          sleep(0.1)
         end
       end
       
       #Sleep for a little less than the other fiber
       2.times do
         wake_order << 1
-        Tapestry::Fiber.sleep(0.1)
+        sleep(0.1)
       end
     end
     
@@ -41,16 +41,16 @@ describe Tapestry do
       
       f = Tapestry::Fiber.new do
         begin
-          Tapestry::Fiber.sleep 0.1
+          sleep 0.1
         rescue TestException => e
           ex = e
         end
       end
       
       #Sleep just enough to let the other Fiber run
-      Tapestry::Fiber.sleep 0.01
+      sleep 0.01
       f.raise TestException
-      Tapestry::Fiber.sleep 0.01
+      sleep 0.01
       
       (ex.is_a? TestException).should == true
     end
@@ -62,7 +62,7 @@ describe Tapestry do
       fiber = Tapestry::Fiber.new do
         tap_fiber = Fiber.current.tapestry_fiber
       end
-      Tapestry::Fiber.sleep 0.01
+      sleep 0.01
       
       tap_fiber.should == fiber
     end
@@ -74,7 +74,7 @@ describe Tapestry do
       
       f = ::Fiber.new do
         results << 2
-        Tapestry::Fiber.sleep(0.01)
+        sleep(0.01)
         results << 3
       end
       results << 1
