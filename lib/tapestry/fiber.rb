@@ -53,7 +53,7 @@ module Tapestry
 
         f.send :unpark!
       end
-      t.attach(Tapestry::LOOP)
+      t.attach(Tapestry.ev_loop)
       Fiber.park
     end
     

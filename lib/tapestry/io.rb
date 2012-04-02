@@ -130,8 +130,8 @@ class Tapestry::IO
     w = Coolio::IOWatcher.new(io, :r)
     t = Coolio::TimerWatcher.new(timeout, false) if(timeout > 0)
 
-    w.attach Tapestry::LOOP
-    t.attach Tapestry::LOOP
+    w.attach Tapestry.ev_loop
+    t.attach Tapestry.ev_loop
     
     f = Fiber.current
     p = Proc.new do
@@ -175,7 +175,7 @@ class Tapestry::IO
     
     def initialize(tio)
       super(tio.io, :r)
-      attach Tapestry::LOOP
+      attach Tapestry.ev_loop
       disable
     end
     
@@ -204,7 +204,7 @@ class Tapestry::IO
     
     def initialize(tio)
       super(tio.io, :w)
-      attach(Tapestry::LOOP)
+      attach(Tapestry.ev_loop)
       disable
       @tapestry_io = tio
     end
