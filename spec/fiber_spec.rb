@@ -3,11 +3,15 @@ require File.expand_path('../spec_helper', __FILE__)
 describe Tapestry do
 
   it "boots and runs the supplied block" do
-    block_ran = false
+    block_ran = 0
     Tapestry.boot! do
-      block_ran = true
+      block_ran += 1
+      sleep(0.05)
+      block_ran += 1
+      sleep(0.05)
+      block_ran += 1
     end
-    block_ran.should == true
+    block_ran.should == 3
   end
   
   it "runs two fibers concurrently" do

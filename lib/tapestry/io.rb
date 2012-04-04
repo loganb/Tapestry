@@ -185,12 +185,12 @@ class Tapestry::IO
       self.blocking_fiber = f
       enabled? || enable
       
-      Tapestry::Fiber.park
+      f.sleep(:forever)
       disable
     end
     
     def on_readable
-      blocking_fiber.transfer
+      blocking_fiber.signal :io
     end
     
     def detach

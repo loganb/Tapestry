@@ -6,7 +6,7 @@ module Tapestry
   class StateError < Exception; end
   
   class Fiber < ::Fiber
-  
+
     def initialize(*args, &block)
       super() do
         begin
@@ -26,7 +26,7 @@ module Tapestry
     # awoken and the exception will be reaised. 
     #
     def raise(*args)
-      if self != Fiber.current
+      if self != Fiber.current.tapestry_fiber
         @interrupt = args[0]
         unpark!
       else
@@ -42,28 +42,79 @@ module Tapestry
     end
     
     #
-    # Queues something to run in time seconds
+    # Queues Fiber to resume in time seconds. If the block is supplied,
+    # it should return true if the Fiber should resume or false if it should
+    # continue waiting for timeout. It will be passed the value passed to 
+    # Fiber#signal
+    # 
     #
-    def self.sleep(time)
-      t = Coolio::TimerWatcher.new(time, false)
-      f = Fiber.current.tapestry_fiber
+    def self.sleep(time, &block)
+      f = Fiber.current
+      t = f.tapestry_fiber
 
-      t.on_timer do
-        t.detach #One-shot…
-
-        f.send :unpark!
+      unless(time == :forever)
+        timeout = Coolio::TimerWatcher.new(time, false)
+        timeout.on_timer do
+          timeout.detach
+          #STDERR.puts("SIGNALING #{t}")
+          t.signal :timeout
+        end
+        timeout.attach(Tapestry.ev_loop)
       end
-      t.attach(Tapestry.ev_loop)
-      Fiber.park
+      #STDERR.puts("THE TIMEOUT IS #{timeout}, #{Tapestry.ev_loop}")
+
+      begin
+        Tapestry.waitqueue[t] = f
+        #STDERR.puts("PARKING #{t}")
+        Tapestry::LOOP_FIBER.transfer #This is where we lose control
+        #STDERR.puts("RESUMED #{t}")
+      
+        #Upon resume, raise exception if set
+        t.send :check_interrupt
+
+        #return the signal value
+        s = t.send :signal?
+        if s == :timeout or (block_given? ? yield(s) : true)
+          timeout.detach if(timeout && timeout.attached?)
+          return s
+        end
+      end while true
     end
-    
+
+    #
+    # Can be called to wake a sleeping Fiber. Used internally, and should not
+    # be called by user code
+    #
+    def signal(value)
+      raise ArgumentError, "Signal value be nil" if value.nil?
+      unless @signal
+        @signal = value
+        unpark!
+      end
+    end
     
     protected
     
+
+    #
+    # Raises an exception if an interrupt was raised remotely
+    #
     def check_interrupt
       if i = @interrupt
         @interrupt = nil
-        raise i
+        @signal = nil
+        Kernel.raise i
+      end
+    end
+    
+    #
+    # Returns the object passed to Fiber#signal if the fiber was signalled, 
+    # nil otherwise. The signal is also cleared. 
+    #
+    def signal?
+      if s = @signal
+        @signal = nil
+        s
       end
     end
     
@@ -72,6 +123,7 @@ module Tapestry
     #
     def unpark!(reason = nil)
       r = Tapestry.waitqueue[self]
+      Tapestry.waitqueue.delete self
       Tapestry.runqueue << r if r
     end
   end
@@ -94,24 +146,6 @@ module Tapestry
     end
     
     module ClassMethods
-      #
-      # Pauses the current fiber until woken by an event. NOTE: it is possible to
-      # have spurious wakeups. Upon resume, this method may throw an exception if
-      # another Fiber called Tapestry::Fiber#raise on this one. 
-      #
-      def park(timeout = 0, &block)
-        f = Fiber.current
-        t = f.tapestry_fiber
-
-        t.send :check_interrupt
-
-        Tapestry.waitqueue[t] = f
-        Tapestry::LOOP_FIBER.transfer
-        Tapestry.waitqueue.delete t
-        
-        #Upon resume, raise exception if set
-        t.send :check_interrupt
-      end
     end
   end
 end
