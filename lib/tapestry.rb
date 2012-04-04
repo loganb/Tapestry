@@ -57,6 +57,7 @@ module Kernel
 end
 
 require 'tapestry/fiber'
+require 'tapestry/waitable'
 require 'tapestry/io'
 require 'tapestry/tcp_socket'
 require 'tapestry/tcp_server'
