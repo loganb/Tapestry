@@ -87,4 +87,38 @@ describe Tapestry do
     end
     results.should == [1,2,3,4]
   end
+  
+  it "joins a finished fiber" do
+    results = []
+    Tapestry.boot! do
+      
+      f = Tapestry::Fiber.new do
+        results << 2
+        sleep(0.1)
+        results << 3
+      end
+      
+      results << 1
+      f.join
+      results << 4
+    end
+    results.should == [1,2,3,4]
+  end
+  
+  it "returns nil on timeout when joining a fiber" do
+    results = []
+    Tapestry.boot! do
+      
+      f = Tapestry::Fiber.new do
+        results << 2
+        sleep(0.1)
+        results << 4
+      end
+      
+      results << 1
+      f.join(0.01).should == nil
+      results << 3
+    end
+    results.should == [1,2,3,4]
+  end
 end

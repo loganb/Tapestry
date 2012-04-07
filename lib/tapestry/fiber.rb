@@ -1,3 +1,4 @@
+require 'tapestry/waitable'
 
 #
 # We need some state on the fiber
@@ -6,7 +7,15 @@ module Tapestry
   class StateError < Exception; end
   
   class Fiber < ::Fiber
-
+    TIMED_OUT = Object.new 
+    
+    include Waitable
+    
+    #
+    # Fires when the Fiber terminates
+    #
+    signal_on(:terminate)
+    
     def initialize(*args, &block)
       super() do
         begin
@@ -14,6 +23,8 @@ module Tapestry
         rescue Exception => e
           STDERR.puts("Execption in #{Fiber.current}: #{e}\n#{e.backtrace.collect { |l| "  #{l}"}.join("\n")}")
           raise
+        ensure
+          signal_terminate
         end
       end
       Tapestry.runqueue << self
@@ -32,6 +43,15 @@ module Tapestry
       else
         Kernel.raise(*args)
       end
+    end
+    
+    #
+    # Blocks until this fiber terminates
+    #
+    def join(limit = :forever)
+      return self unless alive?
+
+      wait_for_terminate(limit) ? self : nil
     end
 
     #
@@ -57,7 +77,7 @@ module Tapestry
         timeout.on_timer do
           timeout.detach
           #STDERR.puts("SIGNALING #{t}")
-          t.signal :timeout
+          t.signal TIMED_OUT
         end
         timeout.attach(Tapestry.ev_loop)
       end
@@ -74,7 +94,7 @@ module Tapestry
 
         #return the signal value
         s = t.send :signal?
-        if s == :timeout or (block_given? ? yield(s) : true)
+        if s == TIMED_OUT or (block_given? ? yield(s) : true)
           timeout.detach if(timeout && timeout.attached?)
           return s
         end

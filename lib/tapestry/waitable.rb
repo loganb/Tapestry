@@ -47,7 +47,7 @@ module Tapestry::Waitable
       define_method "wait_for_#{sym}".to_sym, ->(timeout = :forever) do
         instance_exec Fiber.current.tapestry_fiber, &add_to_set
         
-        Fiber.sleep timeout
+        Fiber.sleep(timeout) == sym
       end
       
       define_method "on_#{sym}" do |&block|
@@ -58,7 +58,7 @@ module Tapestry::Waitable
         if cb.is_a? Proc
           cb.call
         else #Its a Fiber
-          cb.signal :signalled
+          cb.signal :sym
         end
       end
       
